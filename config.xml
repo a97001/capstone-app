@@ -6,6 +6,7 @@
   <content src="index.html"/>
   <access origin="*"/>
   <allow-navigation href="http://ionic.local/*"/>
+  <allow-navigation href="http://192.168.1.108:8100"/>
   <allow-intent href="http://*/*"/>
   <allow-intent href="https://*/*"/>
   <allow-intent href="tel:*"/>
@@ -27,6 +28,7 @@
   <preference name="SplashMaintainAspectRatio" value="true"/>
   <preference name="FadeSplashScreenDuration" value="300"/>
   <preference name="SplashShowOnlyFirstTime" value="false"/>
+  <preference name="loadUrlTimeoutValue" value="700000" />
   <feature name="StatusBar">
     <param name="ios-package" onload="true" value="CDVStatusBar"/>
   </feature>
@@ -36,4 +38,5 @@
   <plugin name="cordova-plugin-statusbar" spec="2.2.1"/>
   <plugin name="cordova-plugin-device" spec="1.1.4"/>
   <plugin name="cordova-plugin-splashscreen" spec="~4.0.1"/>
+  <plugin name="cordova-plugin-pedometer" spec="~0.4.1"/>
 </widget>

@@ -12,3 +12,22 @@
   https://www.typescriptlang.org/docs/handbook/declaration-files/introduction.html
 */
 declare module '*';
+
+declare namespace L {
+  // there is a child namespace "vectorGrid"
+
+  export interface MapOptions {
+      measureControl?:boolean;
+  }
+
+  export interface MarkerOptions {
+      rotationAngle?: number;
+      measureControl?:boolean;
+  }
+
+  export interface Marker {
+    setRotationAngle?: Function;
+    setRotationOrigin?: Function;
+    update?: Function;
+  }
+}

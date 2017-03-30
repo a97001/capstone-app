@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>2F</title>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no"/>
+	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.3/dist/leaflet.css" />
+    <!--[if lte IE 8]>
+    <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.6.4/leaflet.ie.css" />
+    <![endif]-->
+    <script
+      src="https://code.jquery.com/jquery-3.2.1.min.js"
+      integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+      crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/leaflet@1.0.3/dist/leaflet.js"></script>
+	<link rel="stylesheet" href="https://unpkg.com/leaflet.pm@0.15.0/dist/leaflet.pm.css" />
+	<script src="https://unpkg.com/leaflet.pm@0.15.0/dist/leaflet.pm.min.js"></script>
+    <script>
+      function init() {
+        var jwt = "";
+        var mapMinZoom = 0;
+        var mapMaxZoom = 5;
+        var map = L.map('map', {
+          maxZoom: mapMaxZoom,
+          minZoom: mapMinZoom,
+          crs: L.CRS.Simple
+        }).setView([0, 0], mapMaxZoom);
+
+        var mapBounds = new L.LatLngBounds(
+            map.unproject([0, 5888], mapMaxZoom),
+            map.unproject([8192, 0], mapMaxZoom));
+
+        map.fitBounds(mapBounds);
+		    L.tileLayer('../floorplan2f/{z}/{x}/{y}.jpg', {
+          minZoom: mapMinZoom, maxZoom: mapMaxZoom,
+          bounds: mapBounds,
+          attribution: 'Rendered with <a href="http://www.maptiler.com/">MapTiler</a>',
+          noWrap: true
+        }).addTo(map);
+        L.tileLayer('{z}/{x}/{y}.png', {
+          minZoom: mapMinZoom, maxZoom: mapMaxZoom,
+          bounds: mapBounds,
+          attribution: 'Rendered with <a href="http://www.maptiler.com/">MapTiler</a>',
+          noWrap: true
+        }).addTo(map);
+
+        $.post({
+          url: "http://root:@localhost:8529/_open/auth",
+          // headers: {
+          //   'Authorization':'Basic xxxxxxxxxxxxx',
+          //   'X_CSRF_TOKEN':'xxxxxxxxxxxxxxxxxxxx',
+          //   'Content-Type':'application/json'
+          // },
+          data: JSON.stringify({
+            username:"root", password:""
+          }),
+          datatype: 'json',
+          success: function(data) {
+            jwt = data.jwt;
+
+            $.ajax({
+              type: "PUT",
+              headers: {
+                'Authorization':'bearer ' + jwt
+              },
+              url: "http://root:@localhost:8529/_db/capstone/_api/simple/all",
+              data: JSON.stringify({
+                "collection": "waypoint"
+              }),
+              success: function(data) {
+                console.log(data);
+                data.result.forEach(function(waypoint) {
+                  var marker = L.marker(waypoint.coordinates).addTo(map);
+                  marker.bindPopup(waypoint._key);
+                });
+
+
+                $.ajax({
+                  type: "POST",
+                  headers: {
+                    'Authorization':'bearer ' + jwt
+                  },
+                  url: "http://root:@localhost:8529/_db/capstone/_api/cursor",
+                  data: JSON.stringify({
+                    "query": 'FOR vertex IN ANY SHORTEST_PATH "waypoint/981044" TO "waypoint/980616" GRAPH "pathway" RETURN vertex',
+                    batchSize: 2000
+                  }),
+                  success: function(data) {
+                    console.log(data);
+                    var pointList = [];
+                    data.result.forEach(function(waypoint) {
+                      pointList.push(waypoint.coordinates);
+                    });
+                    var firstpolyline = L.polyline(pointList, {
+                        color: 'red',
+                        weight: 3,
+                        opacity: 0.5,
+                        smoothFactor: 1
+                    }).addTo(map);
+                  },
+                  dataType: 'json'
+                });
+              },
+              dataType: 'json'
+            });
+          }
+        });
+
+
+		// define toolbar options
+		var options = {
+			position: 'topleft', // toolbar position, options are 'topleft', 'topright', 'bottomleft', 'bottomright'
+			drawMarker: true,  // adds button to draw markers
+			drawPolygon: true,  // adds button to draw a polygon
+			drawPolyline: true,  // adds button to draw a polyline
+			editPolygon: true,  // adds button to toggle global edit mode
+			deleteLayer: true   // adds a button to delete layers
+		};
+
+		// add leaflet.pm controls to the map
+		map.pm.addControls(options);
+
+		map.on('pm:create', function(e) {
+			console.log(e.layer.toGeoJSON());
+		});
+      }
+    </script>
+    <style>
+      html, body, #map { width:100%; height:100%; margin:0; padding:0; }
+    </style>
+  </head>
+  <body onload="init()">
+    <div id="map"></div>
+  </body>
+</html>
