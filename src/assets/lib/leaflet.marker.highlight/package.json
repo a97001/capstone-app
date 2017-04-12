@@ -1,0 +1,94 @@
+{
+  "_args": [
+    [
+      {
+        "raw": "leaflet.marker.highlight",
+        "scope": null,
+        "escapedName": "leaflet.marker.highlight",
+        "name": "leaflet.marker.highlight",
+        "rawSpec": "",
+        "spec": "latest",
+        "type": "tag"
+      },
+      "C:\\Users\\comon\\Desktop\\git\\blank\\myApp"
+    ]
+  ],
+  "_from": "leaflet.marker.highlight@latest",
+  "_id": "leaflet.marker.highlight@0.0.3",
+  "_inCache": true,
+  "_location": "/leaflet.marker.highlight",
+  "_nodeVersion": "4.2.1",
+  "_npmOperationalInternal": {
+    "host": "packages-18-east.internal.npmjs.com",
+    "tmp": "tmp/leaflet.marker.highlight-0.0.3.tgz_1481503429955_0.004454461857676506"
+  },
+  "_npmUser": {
+    "name": "brandonxiang",
+    "email": "1542453460@qq.com"
+  },
+  "_npmVersion": "4.0.2",
+  "_phantomChildren": {},
+  "_requested": {
+    "raw": "leaflet.marker.highlight",
+    "scope": null,
+    "escapedName": "leaflet.marker.highlight",
+    "name": "leaflet.marker.highlight",
+    "rawSpec": "",
+    "spec": "latest",
+    "type": "tag"
+  },
+  "_requiredBy": [
+    "#USER"
+  ],
+  "_resolved": "https://registry.npmjs.org/leaflet.marker.highlight/-/leaflet.marker.highlight-0.0.3.tgz",
+  "_shasum": "c7881866c52b708c8eedcf54082acf62dfdd78d4",
+  "_shrinkwrap": null,
+  "_spec": "leaflet.marker.highlight",
+  "_where": "C:\\Users\\comon\\Desktop\\git\\blank\\myApp",
+  "author": {
+    "name": "brandonxiang"
+  },
+  "bugs": {
+    "url": "https://github.com/brandonxiang/leaflet.marker.hightlight/issues"
+  },
+  "dependencies": {},
+  "description": "Highlight performance for L.marker",
+  "devDependencies": {},
+  "directories": {},
+  "dist": {
+    "shasum": "c7881866c52b708c8eedcf54082acf62dfdd78d4",
+    "tarball": "https://registry.npmjs.org/leaflet.marker.highlight/-/leaflet.marker.highlight-0.0.3.tgz"
+  },
+  "gitHead": "5f5a09c3aa8718523a7e794dc919606bf5b3a101",
+  "homepage": "https://github.com/brandonxiang/leaflet.marker.hightlight#readme",
+  "keywords": [
+    "leaflet",
+    "highlight",
+    "marker"
+  ],
+  "license": "MIT",
+  "main": "index.js",
+  "maintainers": [
+    {
+      "name": "brandonxiang",
+      "email": "1542453460@qq.com"
+    }
+  ],
+  "name": "leaflet.marker.highlight",
+  "optionalDependencies": {},
+  "readme": "ERROR: No README data found!",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/brandonxiang/leaflet.marker.hightlight.git"
+  },
+  "scripts": {
+    "build": "npm run build-js && npm run build-css && npm run compress-js && npm run compress-css",
+    "build-css": "cat  index.css > ./dist/leaflet.marker.highlight-src.css",
+    "build-js": "cat  index.js > ./dist/leaflet.marker.highlight-src.js",
+    "compress-css": "uglifycss ./dist/leaflet.marker.highlight-src.css > ./dist/leaflet.marker.highlight.css",
+    "compress-js": "uglifyjs ./dist/leaflet.marker.highlight-src.js -o ./dist/leaflet.marker.highlight.js -m",
+    "dev": "browser-sync start --server --files \"**/*.html,**/*.css,**/*.js\"",
+    "release": "git push origin master && git checkout gh-pages && git merge master && git push origin gh-pages && git checkout master && npm publish"
+  },
+  "version": "0.0.3"
+}

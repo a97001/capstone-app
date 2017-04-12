@@ -1,11 +1,251 @@
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.3/dist/leaflet.css" />
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/0.4.2/leaflet.draw.css"/>
-<ion-header>
+<!-- <ion-header>
   <ion-navbar>
-    <ion-title>Home</ion-title>
+    <ion-title>
+      Ionic Blank
+    </ion-title>
   </ion-navbar>
-</ion-header>
+</ion-header> -->
 
-<ion-content padding>
-  <div style="height: 100%; width: 100%" id="map1"></div>
+<ion-content>
+  <p id="bar"></p>
+  <ion-fab left top id="arToggle" class="displayNoneClass" style="color: #FFFFFF; text-align: center; background-color: rgba(255, 139, 85, 0.15);">
+    AR Mode
+    <ion-toggle [(ngModel)]="isARMode" (ionChange)="onARModeChanged($event)"></ion-toggle>
+  </ion-fab>
+  <div #upper id="upper" class="background-image">
+      <div id="mapContainer" class="displayNoneClass">
+        <div id="map" data-tap-disabled="true" style="height: 70vw; width: 100%"></div>
+        <ion-fab right top>
+          <button ion-fab color="light" (click)="getCurrentLocation()">
+            <ion-icon name="locate"></ion-icon>
+          </button>
+        </ion-fab>
+      </div>
+      <div id="logoContainer">
+        <ion-grid>
+          <ion-row class="no-padding">
+            <ion-col>
+              <h1 class="home-title">Sun Tuen Mun Shopping Centre Location Finder</h1>
+            </ion-col>
+            <ion-col col-5 class="no-padding">
+              <ion-img width="280" height="280" src="assets/images/home_logo.png" style="background: none"></ion-img>
+            </ion-col>
+          </ion-row>
+        </ion-grid>
+      </div>
+  </div>
+
+  <div id="lower" class="">
+    <ion-scroll #lower scrollX="true" style="width:100vw;height:8vw" >
+      <ion-segment [(ngModel)]="facilityType" style="width:160vw;">
+        <ion-segment-button value="All">
+          All
+        </ion-segment-button>
+        <ion-segment-button value="Restaurant">
+          Restaurant
+        </ion-segment-button>
+        <ion-segment-button value="Furniture">
+          Furniture
+        </ion-segment-button>
+        <ion-segment-button value="Entrance">
+          Entrance
+        </ion-segment-button>
+        <ion-segment-button value="Medicine">
+          Medicine
+        </ion-segment-button>
+      </ion-segment>
+    </ion-scroll>
+
+    <div [hidden]="facilityType !== 'All'" style="width: 100%; height: 60vw;">
+      <ion-searchbar (ionInput)="getItems($event)"></ion-searchbar>
+      <ion-scroll scrollY="true" style="width: 100%; height: 100%;">
+        <ion-card *ngFor='let value of facilities; let i = index;'>
+          <div>
+            <div class="thumbnail">
+              <img class="center-cropped" [src]="'assets/images/facilities/' + value.facility.image" />
+            </div>
+
+            <ion-fab right>
+              <button ion-fab mini (click)="locateFacility(i)">
+                <ion-icon name="pin"></ion-icon>
+              </button>
+            </ion-fab>
+
+            <ion-item>
+              <ion-icon name="wine" item-left large style='visibility: hidden;'></ion-icon>
+              <h2>{{value.facility.name}}</h2>
+              <p>L{{value.facility.floor}} {{value.facility.shopNo}}</p>
+              <p>Tel. {{value.facility.tel}}  {{value.facility.openingTime}}</p>
+            </ion-item>
+
+            <ion-item>
+              <span item-left>18 min</span>
+              <span item-left>(2.6 mi)</span>
+              <button ion-button icon-left clear item-right (click)="setDestination(i)">
+                <ion-icon name="navigate"></ion-icon>
+                Start
+              </button>
+            </ion-item>
+          </div>
+        </ion-card>
+      </ion-scroll>
+    </div>
+
+    <div [hidden]="facilityType !== 'Restaurant'" style="width: 100%; height: 60vw;">
+      <ion-searchbar (ionInput)="getItems($event)"></ion-searchbar>
+      <ion-scroll scrollY="true" style="width: 100%; height: 100%;">
+        <ion-card *ngFor='let value of facilities; let i = index;'>
+          <div *ngIf="value.facility.type == 'Restaurant'">
+            <div class="thumbnail">
+              <img class="center-cropped" [src]="'assets/images/facilities/' + value.facility.image" />
+            </div>
+
+            <ion-fab right>
+              <button ion-fab mini (click)="locateFacility(i)">
+                <ion-icon name="pin"></ion-icon>
+              </button>
+            </ion-fab>
+
+            <ion-item>
+              <ion-icon name="wine" item-left large style='visibility: hidden;'></ion-icon>
+              <h2>{{value.facility.name}}</h2>
+              <p>L{{value.facility.floor}} {{value.facility.shopNo}}</p>
+              <p>Tel. {{value.facility.tel}}  {{value.facility.openingTime}}</p>
+            </ion-item>
+
+            <ion-item>
+              <span item-left>18 min</span>
+              <span item-left>(2.6 mi)</span>
+              <button ion-button icon-left clear item-right (click)="setDestination(i)">
+                <ion-icon name="navigate"></ion-icon>
+                Start
+              </button>
+            </ion-item>
+          </div>
+        </ion-card>
+      </ion-scroll>
+    </div>
+
+    <div [hidden]="facilityType !== 'Furniture'" style="width: 100%; height: 60vw;">
+      <ion-searchbar (ionInput)="getItems($event)"></ion-searchbar>
+      <ion-scroll scrollY="true" style="width: 100%; height: 100%;">
+        <ion-card *ngFor='let value of facilities; let i = index;'>
+          <div *ngIf="value.facility.type == 'Furniture'">
+            <div class="thumbnail">
+              <img class="center-cropped" [src]="'assets/images/facilities/' + value.facility.image" />
+            </div>
+
+            <ion-fab right>
+              <button ion-fab mini (click)="locateFacility(i)">
+                <ion-icon name="pin"></ion-icon>
+              </button>
+            </ion-fab>
+
+            <ion-item>
+              <ion-icon name="wine" item-left large style='visibility: hidden;'></ion-icon>
+              <h2>{{value.facility.name}}</h2>
+              <p>L{{value.facility.floor}} {{value.facility.shopNo}}</p>
+              <p>Tel. {{value.facility.tel}}  {{value.facility.openingTime}}</p>
+            </ion-item>
+
+            <ion-item>
+              <span item-left>18 min</span>
+              <span item-left>(2.6 mi)</span>
+              <button ion-button icon-left clear item-right (click)="setDestination(i)">
+                <ion-icon name="navigate"></ion-icon>
+                Start
+              </button>
+            </ion-item>
+          </div>
+        </ion-card>
+      </ion-scroll>
+    </div>
+
+    <div [hidden]="facilityType !== 'Entrance'" style="width: 100%; height: 60vw;">
+      <ion-searchbar (ionInput)="getItems($event)"></ion-searchbar>
+      <ion-scroll scrollY="true" style="width: 100%; height: 100%;">
+        <ion-card *ngFor='let value of facilities; let i = index;'>
+          <div *ngIf="value.facility.type == 'Entrance'">
+            <div class="thumbnail">
+              <img class="center-cropped" [src]="'assets/images/facilities/' + value.facility.image" />
+            </div>
+
+            <ion-fab right>
+              <button ion-fab mini (click)="locateFacility(i)">
+                <ion-icon name="pin"></ion-icon>
+              </button>
+            </ion-fab>
+
+            <ion-item>
+              <ion-icon name="wine" item-left large style='visibility: hidden;'></ion-icon>
+              <h2>{{value.facility.name}}</h2>
+              <p>L{{value.facility.floor}} {{value.facility.shopNo}}</p>
+              <p>Tel. {{value.facility.tel}}  {{value.facility.openingTime}}</p>
+            </ion-item>
+
+            <ion-item>
+              <span item-left>18 min</span>
+              <span item-left>(2.6 mi)</span>
+              <button ion-button icon-left clear item-right (click)="setDestination(i)">
+                <ion-icon name="navigate"></ion-icon>
+                Start
+              </button>
+            </ion-item>
+          </div>
+        </ion-card>
+      </ion-scroll>
+    </div>
+
+    <div [hidden]="facilityType !== 'Medicine'" style="width: 100%; height: 60vw;">
+      <ion-searchbar (ionInput)="getItems($event)"></ion-searchbar>
+      <ion-scroll scrollY="true" style="width: 100%; height: 100%;">
+        <ion-card *ngFor='let value of facilities; let i = index;'>
+          <div *ngIf="value.facility.type == 'Medicine'">
+            <div class="thumbnail">
+              <img class="center-cropped" [src]="'assets/images/facilities/' + value.facility.image" />
+            </div>
+
+            <ion-fab right>
+              <button ion-fab mini (click)="locateFacility(i)">
+                <ion-icon name="pin"></ion-icon>
+              </button>
+            </ion-fab>
+
+            <ion-item>
+              <ion-icon name="wine" item-left large style='visibility: hidden;'></ion-icon>
+              <h2>{{value.facility.name}}</h2>
+              <p>L{{value.facility.floor}} {{value.facility.shopNo}}</p>
+              <p>Tel. {{value.facility.tel}}  {{value.facility.openingTime}}</p>
+            </ion-item>
+
+            <ion-item>
+              <span item-left>18 min</span>
+              <span item-left>(2.6 mi)</span>
+              <button ion-button icon-left clear item-right (click)="setDestination(i)">
+                <ion-icon name="navigate"></ion-icon>
+                Start
+              </button>
+            </ion-item>
+          </div>
+        </ion-card>
+      </ion-scroll>
+    </div>
+  </div>
+
+  <div id="camera" class="displayNoneClass">
+    <h6 style="color: #FFFFFF; text-align: center; background-color: rgba(255, 139, 85, 0.15);">Please cature a photo of nearby facility</h6>
+    <ion-fab bottom left>
+      <button color="light" ion-fab mini (click)="closeCamera()">
+        <ion-icon name="close"></ion-icon>
+      </button>
+    </ion-fab>
+    <ion-fab bottom center>
+      <button color="light" ion-fab (click)="captureCamera()">
+        <ion-icon name="camera"></ion-icon>
+      </button>
+    </ion-fab>
+  </div>
+
+  <div id="arContainer" class="displayNoneClass">
+  </div>
 </ion-content>

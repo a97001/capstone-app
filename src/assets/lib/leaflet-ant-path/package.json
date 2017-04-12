@@ -1,0 +1,137 @@
+{
+  "_args": [
+    [
+      {
+        "raw": "leaflet-ant-path",
+        "scope": null,
+        "escapedName": "leaflet-ant-path",
+        "name": "leaflet-ant-path",
+        "rawSpec": "",
+        "spec": "latest",
+        "type": "tag"
+      },
+      "C:\\Users\\comon\\Desktop\\git\\blank\\myApp"
+    ]
+  ],
+  "_from": "leaflet-ant-path@latest",
+  "_id": "leaflet-ant-path@0.5.1",
+  "_inCache": true,
+  "_location": "/leaflet-ant-path",
+  "_nodeVersion": "7.7.1",
+  "_npmOperationalInternal": {
+    "host": "packages-18-east.internal.npmjs.com",
+    "tmp": "tmp/leaflet-ant-path-0.5.1.tgz_1490974453210_0.7064053914509714"
+  },
+  "_npmUser": {
+    "name": "rubenspgcavalcante",
+    "email": "rubenspgcavalcante@gmail.com"
+  },
+  "_npmVersion": "4.1.2",
+  "_phantomChildren": {},
+  "_requested": {
+    "raw": "leaflet-ant-path",
+    "scope": null,
+    "escapedName": "leaflet-ant-path",
+    "name": "leaflet-ant-path",
+    "rawSpec": "",
+    "spec": "latest",
+    "type": "tag"
+  },
+  "_requiredBy": [
+    "#USER"
+  ],
+  "_resolved": "https://registry.npmjs.org/leaflet-ant-path/-/leaflet-ant-path-0.5.1.tgz",
+  "_shasum": "05aacadbc25905ec2e5bf3729692789feaf2e93d",
+  "_shrinkwrap": null,
+  "_spec": "leaflet-ant-path",
+  "_where": "C:\\Users\\comon\\Desktop\\git\\blank\\myApp",
+  "author": {
+    "name": "Rubens Pinheiro Gonçalves Cavalcante",
+    "email": "rubenspgcavalcante@gmail.com"
+  },
+  "bugs": {
+    "url": "https://github.com/rubenspgcavalcante/leaflet-ant-path/issues"
+  },
+  "dependencies": {},
+  "description": "Creates a leaflet polyline with a 'ant-path' animated flux",
+  "devDependencies": {
+    "babel-core": "^6.22.1",
+    "babel-eslint": "^7.1.1",
+    "babel-loader": "^6.2.10",
+    "babel-plugin-add-module-exports": "^0.2.1",
+    "babel-plugin-transform-class-properties": "^6.22.0",
+    "babel-plugin-transform-object-rest-spread": "^6.22.0",
+    "babel-plugin-transform-regenerator": "^6.22.0",
+    "babel-polyfill": "^6.22.0",
+    "babel-preset-es2015": "^6.22.0",
+    "codacy-coverage": "^2.0.0",
+    "core-js": "^2.4.1",
+    "css-loader": "^0.26.1",
+    "eslint": "^3.14.0",
+    "eslint-loader": "^1.6.1",
+    "expose-loader": "^0.7.3",
+    "file-loader": "^0.10.1",
+    "istanbul-instrumenter-loader": "^2.0.0",
+    "jasmine": "^2.5.3",
+    "jasmine-core": "^2.5.2",
+    "json-loader": "^0.5.4",
+    "karma": "^1.4.0",
+    "karma-babel-preprocessor": "^6.0.1",
+    "karma-coverage": "^1.1.1",
+    "karma-jasmine": "^1.1.0",
+    "karma-phantomjs-launcher": "^1.0.2",
+    "karma-remap-istanbul": "^0.6.0",
+    "karma-sourcemap-loader": "^0.3.7",
+    "karma-webpack": "^2.0.2",
+    "leaflet": "^1.0.3",
+    "materialize-css": "^0.98.0",
+    "node-sass": "^4.3.0",
+    "phantomjs-prebuilt": "^2.1.14",
+    "sass-loader": "^6.0.3",
+    "style-loader": "^0.13.1",
+    "url-loader": "^0.5.7",
+    "webpack": "^2.2.0",
+    "webpack-bundle-analyzer": "^2.3.1",
+    "webpack-dev-server": "^2.2.0"
+  },
+  "directories": {},
+  "dist": {
+    "shasum": "05aacadbc25905ec2e5bf3729692789feaf2e93d",
+    "tarball": "https://registry.npmjs.org/leaflet-ant-path/-/leaflet-ant-path-0.5.1.tgz"
+  },
+  "gitHead": "904e62e04b8d88f414ceb1446064207bacd12a54",
+  "homepage": "http://rubenspgcavalcante.github.io/leaflet-ant-path",
+  "keywords": [
+    "leaflet",
+    "plugin",
+    "polyline",
+    "animation"
+  ],
+  "license": "MIT",
+  "main": "dist/leaflet-ant-path.js",
+  "maintainers": [
+    {
+      "name": "rubenspgcavalcante",
+      "email": "rubenspgcavalcante@gmail.com"
+    }
+  ],
+  "name": "leaflet-ant-path",
+  "optionalDependencies": {},
+  "perDependencie": {
+    "leaflet": "^0.7.7"
+  },
+  "readme": "ERROR: No README data found!",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rubenspgcavalcante/leaflet-ant-path.git"
+  },
+  "scripts": {
+    "analyze": "NODE_ENV=production webpack --profile --json > .wbprofile.json && webpack-bundle-analyzer .wbprofile.json -m server",
+    "build": "NODE_ENV=production webpack  --colors --profile --progress",
+    "codacy": "cat coverage/lcov/lcov.info | codacy-coverage",
+    "prepublish": "npm run build",
+    "start": "NODE_ENV=development webpack-dev-server -d --cache --inline --host 0.0.0.0",
+    "test": "karma start --log-level debug --single-run"
+  },
+  "version": "0.5.1"
+}

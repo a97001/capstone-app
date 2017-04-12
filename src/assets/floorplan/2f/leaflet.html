@@ -31,12 +31,12 @@
             map.unproject([8192, 0], mapMaxZoom));
 
         map.fitBounds(mapBounds);
-		    L.tileLayer('../floorplan2f/{z}/{x}/{y}.jpg', {
-          minZoom: mapMinZoom, maxZoom: mapMaxZoom,
-          bounds: mapBounds,
-          attribution: 'Rendered with <a href="http://www.maptiler.com/">MapTiler</a>',
-          noWrap: true
-        }).addTo(map);
+		    // L.tileLayer('../floorplan2f/{z}/{x}/{y}.jpg', {
+        //   minZoom: mapMinZoom, maxZoom: mapMaxZoom,
+        //   bounds: mapBounds,
+        //   attribution: 'Rendered with <a href="http://www.maptiler.com/">MapTiler</a>',
+        //   noWrap: true
+        // }).addTo(map);
         L.tileLayer('{z}/{x}/{y}.png', {
           minZoom: mapMinZoom, maxZoom: mapMaxZoom,
           bounds: mapBounds,
@@ -99,6 +99,31 @@
                     }).addTo(map);
                   },
                   dataType: 'json'
+                });
+              },
+              dataType: 'json'
+            });
+
+            $.ajax({
+              type: "PUT",
+              headers: {
+                'Authorization':'bearer ' + jwt
+              },
+              url: "http://root:@localhost:8529/_db/capstone/_api/simple/all",
+              data: JSON.stringify({
+                "collection": "facilities"
+              }),
+              success: function(data) {
+                console.log(data);
+                data.result.forEach(function(facility) {
+                  var icon = L.icon({
+                      iconUrl: '../../../assets/images/' + facility.icon,
+                      iconSize: facility.iconSize, // size of the icon
+
+                  });
+                  var marker = L.marker(facility.coordinates, { icon: icon }).addTo(map);
+                  var popup = "<table><tr><td>Name: " + facility.name + "</td></tr><tr><td>Type: " + facility.type + "</td></tr></table>"
+                  marker.bindPopup(popup);
                 });
               },
               dataType: 'json'
