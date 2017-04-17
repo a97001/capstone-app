@@ -455,7 +455,7 @@ export class HomePage {
 			var divisions = 10000;
 
 			var gridHelper = new THREE.GridHelper( size, divisions );
-			scene.add( gridHelper );
+			// scene.add( gridHelper );
 
       var light = new THREE.HemisphereLight( 0xffffbb, 0x080820, 1 );
 			scene.add( light );
