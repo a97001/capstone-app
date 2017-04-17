@@ -10,9 +10,14 @@ declare var CameraPreview: any;
 declare var pedometer;
 declare var THREE;
 declare var navigator;
+declare var EventsControls;
 
 const PRESSURE_STANDARD_ATMOSPHERE = 1013.25;
-const FLOOR_HEIGHT_THRESHOLD = 1;
+const FLOOR_HEIGHT_THRESHOLD = 3;
+const FLOOR_CHANGE_THRESHOLD = 1.5;
+const MAP_RATIO = 8.752009 / 7.0104;
+let userHeight = 175;
+let footStepLength = 175 * 0.415 / 100;
 
 @Component({
   selector: 'page-home',
@@ -79,27 +84,39 @@ export class HomePage {
     });
 
     this.platform.ready().then(() => {
+      let goingUpMsg = this.loadingCtrl.create({
+        content: 'Your are going up...'
+      });
+      let goingDownMsg = this.loadingCtrl.create({
+        content: 'Your are going down...'
+      });
       var watchID = navigator.barometer.watchPressure((pressure) => {
         var currentHeight = 44330 * (1 - Math.pow(( pressure.val / PRESSURE_STANDARD_ATMOSPHERE ), 1 / 5.255));
         if (this.oldHeight) {
             currentHeight = 0.1 * currentHeight + (1 - 0.1) * this.oldHeight;
-            document.getElementById('bar').innerHTML = "bar: " + pressure.val + ", <br>height: " + currentHeight + ", <br>different: " + (currentHeight - this.oldHeight);
+            // document.getElementById('bar').innerHTML = "bar: " + pressure.val + ", <br>height: " + currentHeight + ", <br>different: " + (currentHeight - this.oldHeight);
             if (this.referenceHeight) {
               if (this.referenceHeight - this.oldHeight > FLOOR_HEIGHT_THRESHOLD) {
+                goingUpMsg.dismiss();
                 this.switchFloor(2);
                 this.referenceHeight = this.oldHeight;
                 this.currentLocationMarker.setLatLng([-62, 111.75]).update();
               } else if (this.referenceHeight - this.oldHeight < -FLOOR_HEIGHT_THRESHOLD) {
+                goingDownMsg.dismiss();
                 this.switchFloor(3);
                 this.referenceHeight = this.oldHeight;
                 this.currentLocationMarker.setLatLng([-88.375, 113.75]).update();
+              } else if (this.referenceHeight - this.oldHeight > FLOOR_CHANGE_THRESHOLD) {
+                goingUpMsg.present();
+              } else if (this.referenceHeight - this.oldHeight < -FLOOR_CHANGE_THRESHOLD) {
+                goingDownMsg.present();
               }
             }
         }
         this.oldHeight = currentHeight;
       }, (err) => {
         console.log(err);
-      }, { frequency: 200 });
+      }, { frequency: 250 });
     });
 
   }
@@ -242,7 +259,7 @@ export class HomePage {
                   const tmpLat = this.currentLocationMarker.getLatLng().lat;
                   const tmpLng = this.currentLocationMarker.getLatLng().lng;
                   // console.log({stepDiff: stepDiff, x: stepDiff * Math.sin(this.toRadians(this.orientation)), y: stepDiff + Math.cos(this.toRadians(this.orientation)), ori: this.orientation, oldLat: tmpLat, oldLng: tmpLng, newLat: tmpLat + 1.191628522 * stepDiff * Math.sin(this.toRadians(this.orientation)), newLng: tmpLng + 1.191628522 * stepDiff + Math.cos(this.toRadians(this.orientation))});
-                  const newLatLng = L.latLng([tmpLat + 1.191628522 * stepDiff * Math.cos(this.toRadians(this.orientation)), tmpLng + 1.191628522 * stepDiff * Math.sin(this.toRadians(this.orientation))]);
+                  const newLatLng = L.latLng([tmpLat + (MAP_RATIO * footStepLength) * stepDiff * Math.cos(this.toRadians(this.orientation)), tmpLng + (MAP_RATIO * footStepLength) * stepDiff * Math.sin(this.toRadians(this.orientation))]);
                   this.currentLocationMarker.setLatLng(newLatLng).update();
                   this.map.setView(newLatLng, this.map.getZoom());
                 }, (err) => {
@@ -357,11 +374,11 @@ export class HomePage {
   }
 
   createAREnvironment(): void {
-			var container, camera, scene, geometry, mesh, arrows = [], floor = this.currentFloor;
+			var container, camera, scene, geometry, mesh, arrows = [], facilities = [], floor = this.currentFloor;
 
 			container = document.getElementById( 'arContainer' );
 
-			camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 1100);
+			camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 110);
 
 			camera.position.x = this.currentLocationMarker.getLatLng().lat;
 			camera.position.y = 3;
@@ -399,9 +416,34 @@ export class HomePage {
               var newObject = object.clone();
               newObject.position.set(point[0], 3, point[1]);
               newObject.rotation.y = (-angle * Math.PI / 180);
-
+              newObject.name = 'test name';
               scene.add(newObject);
               arrows.push(newObject);
+            }
+          }
+        });
+        loader.load('assets/images/end.obj', (object) => {
+          var material = new THREE.MeshPhysicalMaterial( {color: new THREE.Color( 0, 1, 0 ) } );
+          object.traverse( function ( child ) {
+            if ( child instanceof THREE.Mesh ) {
+              child.material = material;
+            }
+          });
+          // object.scale.set(1.5, 1.5, 1.5);
+          object.castShadow = true;
+          for (let i = 0; i < this.facilities.length - 1; i++) {
+            if (this.facilities[i].facility.floor === floor) {
+              // let point = this.pointList[i];
+              // let point1 = this.pointList[i + 1];
+              // console.log(point, point1);
+              // let bearing = L.GeometryUtil.bearing(L.latLng(point[0], point[1]), L.latLng(point1[0], point1[1]));
+              // let angle = L.GeometryUtil.computeAngle(L.point(point[0], point[1]), L.point(point1[0], point1[1]));
+              var newObject = object.clone();
+              newObject.position.set(this.facilities[i].facility.coordinates[0], 3, this.facilities[i].facility.coordinates[1]);
+              // newObject.rotation.y = (-angle * Math.PI / 180);
+              newObject.name = 'test name';
+              scene.add(newObject);
+              facilities.push(newObject);
             }
           }
         });
@@ -440,12 +482,22 @@ export class HomePage {
 			this.renderer.domElement.style.top = 0;
 			container.appendChild(this.renderer.domElement);
 
+      var clickEventsControls = new EventsControls(camera, this.renderer.domElement);
+      clickEventsControls.attachEvent( 'onclick', function () {
+				console.log( 'this.focused.name: ' + this.focused.name );
+			});
+      for (let i = 0; i < arrows.length; i++) {
+        clickEventsControls.attach(arrows[i]);
+      }
       var animate = () => {
         window.requestAnimationFrame( animate );
 
         this.controls.update();
         for (let i = 0; i < arrows.length; i++) {
           arrows[i].rotateX(0.01);
+        }
+        for (let i = 0; i < facilities.length; i++) {
+          facilities[i].rotateY(0.05);
         }
         camera.position.x = this.currentLocationMarker.getLatLng().lat;
   			camera.position.y = 3;
