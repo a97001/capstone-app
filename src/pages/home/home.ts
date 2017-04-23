@@ -1,6 +1,6 @@
 import { Component, ViewChild, ElementRef  } from '@angular/core';
 import { Http, Headers } from '@angular/http';
-import { NavController, Platform, LoadingController  } from 'ionic-angular';
+import { NavController, Platform, LoadingController, AlertController } from 'ionic-angular';
 import { DeviceOrientation, DeviceOrientationCompassHeading } from '@ionic-native/device-orientation';
 import 'rxjs/add/operator/map';
 
@@ -15,6 +15,7 @@ declare var EventsControls;
 const PRESSURE_STANDARD_ATMOSPHERE = 1013.25;
 const FLOOR_HEIGHT_THRESHOLD = 3;
 const FLOOR_CHANGE_THRESHOLD = 1.5;
+const DISTANCE_THRESHOLD = 2;
 const MAP_RATIO = 8.752009 / 7.0104;
 let userHeight = 175;
 let footStepLength = 175 * 0.415 / 100;
@@ -49,7 +50,7 @@ export class HomePage {
   oldHeight = null;
   referenceHeight = null;
 
-  constructor(public navCtrl: NavController, public platform: Platform, public http: Http, public loadingCtrl: LoadingController, public deviceOrientation: DeviceOrientation) {
+  constructor(public navCtrl: NavController, public platform: Platform, public http: Http, public loadingCtrl: LoadingController, public deviceOrientation: DeviceOrientation, public alertCtrl: AlertController) {
   }
 
   ngOnInit(): void {
@@ -97,19 +98,19 @@ export class HomePage {
             // document.getElementById('bar').innerHTML = "bar: " + pressure.val + ", <br>height: " + currentHeight + ", <br>different: " + (currentHeight - this.oldHeight);
             if (this.referenceHeight) {
               if (this.referenceHeight - this.oldHeight > FLOOR_HEIGHT_THRESHOLD) {
-                goingUpMsg.dismiss();
+                goingDownMsg.dismiss();
                 this.switchFloor(2);
                 this.referenceHeight = this.oldHeight;
                 this.currentLocationMarker.setLatLng([-62, 111.75]).update();
               } else if (this.referenceHeight - this.oldHeight < -FLOOR_HEIGHT_THRESHOLD) {
-                goingDownMsg.dismiss();
+                goingUpMsg.dismiss();
                 this.switchFloor(3);
                 this.referenceHeight = this.oldHeight;
                 this.currentLocationMarker.setLatLng([-88.375, 113.75]).update();
               } else if (this.referenceHeight - this.oldHeight > FLOOR_CHANGE_THRESHOLD) {
-                goingUpMsg.present();
-              } else if (this.referenceHeight - this.oldHeight < -FLOOR_CHANGE_THRESHOLD) {
                 goingDownMsg.present();
+              } else if (this.referenceHeight - this.oldHeight < -FLOOR_CHANGE_THRESHOLD) {
+                goingUpMsg.present();
               }
             }
         }
@@ -126,6 +127,7 @@ export class HomePage {
       console.log(data);
       this.facilities = data.result;
       data.result.forEach((facility) => {
+        facility.facility.distance = '--';
         var icon = L.icon({
           iconUrl: 'assets/images/icons/' + facility.facility.icon,
           iconSize: facility.facility.iconSize, // size of the icon
@@ -243,12 +245,13 @@ export class HomePage {
               if (!this.orientationSubscription) {
                 this.orientationSubscription = this.deviceOrientation.watchHeading().subscribe((data: DeviceOrientationCompassHeading) => {
                   this.orientation = data.trueHeading;
-                  // console.log(data);
+                  console.log(data.trueHeading);
                   this.currentLocationMarker.setRotationAngle(data.trueHeading);
                 });
               }
 
               this.map.setView(item.waypoint[0].coordinates, 3);
+              this.updateFacilityDistance();
               if (!this.isPedometerStared) {
                 pedometer.startPedometerUpdates((pedometerData) => {
                   // console.log(pedometerData);
@@ -262,6 +265,10 @@ export class HomePage {
                   const newLatLng = L.latLng([tmpLat + (MAP_RATIO * footStepLength) * stepDiff * Math.cos(this.toRadians(this.orientation)), tmpLng + (MAP_RATIO * footStepLength) * stepDiff * Math.sin(this.toRadians(this.orientation))]);
                   this.currentLocationMarker.setLatLng(newLatLng).update();
                   this.map.setView(newLatLng, this.map.getZoom());
+                  this.updateFacilityDistance();
+                  if (this.destination && this.destination.facility.distance < DISTANCE_THRESHOLD) {
+                    this.arrived();
+                  }
                 }, (err) => {
                   console.log(err);
                 });
@@ -320,6 +327,16 @@ export class HomePage {
     });
   }
 
+  arrived(): void {
+    if (this.currentPathway) {
+      this.map.removeLayer(this.currentPathway);
+    }
+    document.getElementById('arToggle').classList.add('displayNoneClass');
+    this.showArrivedMsg(this.destination.facility);
+    this.destination = null;
+    this.endARMode();
+  }
+
   onARModeChanged(event: any): void {
     if (this.isARMode) {
       setTimeout(() => this.startARMode(), 200);
@@ -374,7 +391,7 @@ export class HomePage {
   }
 
   createAREnvironment(): void {
-			var container, camera, scene, geometry, mesh, arrows = [], facilities = [], floor = this.currentFloor;
+			var container, camera, scene, geometry, mesh, mouse, raycaster, arrows = [], facilities = [], floor = this.currentFloor, flag = null;
 
 			container = document.getElementById( 'arContainer' );
 
@@ -387,7 +404,7 @@ export class HomePage {
       // camera.rotation.y = (-this.orientation * Math.PI / 180);
 
 			this.controls = new THREE.DeviceOrientationControls( camera );
-      this.controls.updateAlphaOffsetAngle(this.orientation * Math.PI / 180);
+      this.controls.updateAlphaOffsetAngle(THREE.Math.degToRad(180 -this.orientation));
 
 			scene = new THREE.Scene();
 
@@ -441,21 +458,42 @@ export class HomePage {
               var newObject = object.clone();
               newObject.position.set(this.facilities[i].facility.coordinates[0], 3, this.facilities[i].facility.coordinates[1]);
               // newObject.rotation.y = (-angle * Math.PI / 180);
-              newObject.name = 'test name';
+              newObject.name = i;
               scene.add(newObject);
               facilities.push(newObject);
             }
           }
         });
+        loader.load('assets/images/flag.obj', (object) => {
+          var material = new THREE.MeshPhysicalMaterial( {color: new THREE.Color( 1, 1, 0 ) } );
+          object.traverse( function ( child ) {
+            if ( child instanceof THREE.Mesh ) {
+              child.material = material;
+            }
+          });
+          object.scale.set(0.5, 0.5, 0.5);
+          object.castShadow = true;
+          object.rotation.x = (-90 * Math.PI / 180);
+          object.position.set(this.pointList[this.pointList.length - 1][0], 0, this.pointList[this.pointList.length - 1][1]);
+          flag = object;
+          scene.add(object);
+        });
       };
 
       // scene.add(cube);
 
-			var size = 10000;
-			var divisions = 10000;
-
-			var gridHelper = new THREE.GridHelper( size, divisions );
+			// var size = 10000;
+			// var divisions = 10000;
+      //
+			// var gridHelper = new THREE.GridHelper( size, divisions );
 			// scene.add( gridHelper );
+
+      // var radius = 1000;
+      // var radials = 16;
+      // var circles = 80;
+      // var divisions = 64;
+      // var helper = new THREE.PolarGridHelper( radius, radials, circles, divisions );
+      // scene.add( helper );
 
       var light = new THREE.HemisphereLight( 0xffffbb, 0x080820, 1 );
 			scene.add( light );
@@ -482,16 +520,43 @@ export class HomePage {
 			this.renderer.domElement.style.top = 0;
 			container.appendChild(this.renderer.domElement);
 
-      var clickEventsControls = new EventsControls(camera, this.renderer.domElement);
-      clickEventsControls.attachEvent( 'onclick', function () {
-				console.log( 'this.focused.name: ' + this.focused.name );
-			});
-      for (let i = 0; i < arrows.length; i++) {
-        clickEventsControls.attach(arrows[i]);
+      var renderer = this.renderer;
+      raycaster = new THREE.Raycaster();
+      mouse = new THREE.Vector2();
+
+      var onDocumentTouchStart = (event) => {
+        event.preventDefault();
+        event.clientX = event.touches[0].clientX;
+        event.clientY = event.touches[0].clientY;
+        onDocumentMouseDown(event);
       }
+
+      var onDocumentMouseDown = (event) => {
+        event.preventDefault();
+        mouse.x = ( event.clientX / renderer.domElement.clientWidth ) * 2 - 1;
+        mouse.y = - ( event.clientY / renderer.domElement.clientHeight ) * 2 + 1;
+        raycaster.setFromCamera(mouse, camera);
+        var intersects = raycaster.intersectObjects(facilities, true);
+        if ( intersects.length > 0 ) {
+          if (this.facilities[intersects[0].object.parent.name]) {
+            console.log(intersects[0].object.parent.name);
+            this.showFacilityAlert(this.facilities[intersects[0].object.parent.name].facility);
+          }
+          // intersects[ 0 ].object.material.color.setHex( Math.random() * 0xffffff );
+          // var particle = new THREE.Sprite( particleMaterial );
+          // particle.position.copy( intersects[ 0 ].point );
+          // particle.scale.x = particle.scale.y = 16;
+          // scene.add( particle );
+        }
+      }
+
+
+      // document.addEventListener( 'mousedown', onDocumentMouseDown, false );
+			document.addEventListener( 'touchstart', onDocumentTouchStart, false );
+
       var animate = () => {
         window.requestAnimationFrame( animate );
-
+        // this.controls.updateAlphaOffsetAngle(this.orientation * Math.PI / 180);
         this.controls.update();
         for (let i = 0; i < arrows.length; i++) {
           arrows[i].rotateX(0.01);
@@ -506,6 +571,7 @@ export class HomePage {
           floor = this.currentFloor;
           changeFloor();
         }
+        raycaster.setFromCamera(mouse, camera);
         this.renderer.render(scene, camera);
 
       };
@@ -561,6 +627,51 @@ export class HomePage {
         delay: 50
     }).addTo(this.map);
     this.currentFloor = i;
+  }
+
+  showFacilityAlert(facility) {
+    let alert = this.alertCtrl.create({
+      title: 'Shop Detail',
+      message: `        <ion-card>
+                  <div class="thumbnail">
+                    <img class="center-cropped" src="assets/images/facilities/${facility.image}" />
+                  </div>
+                  <ion-item>
+                    <ion-icon name="wine" item-left large style='visibility: hidden;'></ion-icon>
+                    <h2>${facility.name}</h2>
+                    <p>L${facility.floor} ${facility.shopNo}</p>
+                    <p>Tel. ${facility.tel}  ${facility.openingTime}</p>
+                  </ion-item>
+
+                  <ion-item>
+                    <!-- <span item-left>18 min</span> -->
+                    <span item-left>8.1 m</span>
+                  </ion-item>
+              </ion-card>`,
+      buttons: ['OK']
+    });
+    alert.present();
+  }
+
+  showArrivedMsg(facility) {
+    let alert = this.alertCtrl.create({
+      title: '',
+      message: `You have arrived ${facility.name}!`,
+      buttons: ['OK']
+    });
+    alert.present();
+  }
+
+  updateFacilityDistance() {
+    const lat = this.currentLocationMarker.getLatLng().lat;
+    const lng = this.currentLocationMarker.getLatLng().lng;
+    for (let i = 0; i < this.facilities.length; i++) {
+      let item = this.facilities[i];
+      if (item.waypoint.length > 0) {
+        item.facility.distance = Math.sqrt(Math.pow(lat - item.waypoint[0].coordinates[0], 2) + Math.pow(lng - item.waypoint[0].coordinates[1], 2)) / MAP_RATIO;
+        item.facility.distance = Math.round(item.facility.distance * 100) / 100;
+      }
+    }
   }
 
   toRadians(angle) {
