@@ -1,6 +1,6 @@
 import { Component, ViewChild, ElementRef  } from '@angular/core';
 import { Http, Headers } from '@angular/http';
-import { NavController, Platform, LoadingController, AlertController } from 'ionic-angular';
+import { NavController, Platform, LoadingController, AlertController, ToastController  } from 'ionic-angular';
 import { DeviceOrientation, DeviceOrientationCompassHeading } from '@ionic-native/device-orientation';
 import 'rxjs/add/operator/map';
 
@@ -13,9 +13,9 @@ declare var navigator;
 declare var EventsControls;
 
 const PRESSURE_STANDARD_ATMOSPHERE = 1013.25;
-const FLOOR_HEIGHT_THRESHOLD = 3;
-const FLOOR_CHANGE_THRESHOLD = 1.5;
-const DISTANCE_THRESHOLD = 2;
+const FLOOR_HEIGHT_THRESHOLD = 2.7;
+const FLOOR_CHANGE_THRESHOLD = 1
+const DISTANCE_THRESHOLD = 2.5;
 const MAP_RATIO = 8.752009 / 7.0104;
 let userHeight = 175;
 let footStepLength = 175 * 0.415 / 100;
@@ -49,8 +49,9 @@ export class HomePage {
   renderer: any;
   oldHeight = null;
   referenceHeight = null;
+  preferVerticalMethod = 'esc';
 
-  constructor(public navCtrl: NavController, public platform: Platform, public http: Http, public loadingCtrl: LoadingController, public deviceOrientation: DeviceOrientation, public alertCtrl: AlertController) {
+  constructor(public navCtrl: NavController, public platform: Platform, public http: Http, public loadingCtrl: LoadingController, public deviceOrientation: DeviceOrientation, public alertCtrl: AlertController, public toastCtrl: ToastController) {
   }
 
   ngOnInit(): void {
@@ -101,12 +102,23 @@ export class HomePage {
                 goingDownMsg.dismiss();
                 this.switchFloor(2);
                 this.referenceHeight = this.oldHeight;
-                this.currentLocationMarker.setLatLng([-62, 111.75]).update();
+                if (this.preferVerticalMethod === 'esc') {
+                  this.currentLocationMarker.setLatLng([-62, 111.75]).update();
+                } else {
+                  this.currentLocationMarker.setLatLng([-105.75, 97.375]).update();
+
+                }
               } else if (this.referenceHeight - this.oldHeight < -FLOOR_HEIGHT_THRESHOLD) {
                 goingUpMsg.dismiss();
                 this.switchFloor(3);
                 this.referenceHeight = this.oldHeight;
-                this.currentLocationMarker.setLatLng([-88.375, 113.75]).update();
+                if (this.preferVerticalMethod === 'esc') {
+                  this.currentLocationMarker.setLatLng([-88.375, 113.75]).update();
+                } else {
+                  this.currentLocationMarker.setLatLng([-113.75, 100]).update();
+
+
+                }
               } else if (this.referenceHeight - this.oldHeight > FLOOR_CHANGE_THRESHOLD) {
                 goingDownMsg.present();
               } else if (this.referenceHeight - this.oldHeight < -FLOOR_CHANGE_THRESHOLD) {
@@ -117,7 +129,7 @@ export class HomePage {
         this.oldHeight = currentHeight;
       }, (err) => {
         console.log(err);
-      }, { frequency: 250 });
+      }, { frequency: 220 });
     });
 
   }
@@ -244,9 +256,8 @@ export class HomePage {
               }
               if (!this.orientationSubscription) {
                 this.orientationSubscription = this.deviceOrientation.watchHeading().subscribe((data: DeviceOrientationCompassHeading) => {
-                  this.orientation = data.trueHeading;
-                  console.log(data.trueHeading);
-                  this.currentLocationMarker.setRotationAngle(data.trueHeading);
+                  this.orientation = data.trueHeading - 25;
+                  this.currentLocationMarker.setRotationAngle(this.orientation);
                 });
               }
 
@@ -302,7 +313,12 @@ export class HomePage {
   }
 
   getShortestPath(): void {
-    this.http.post('http://root:@tyt06326.no-ip.org:8529/_db/capstone/_api/cursor', { query: 'FOR vertex IN ANY SHORTEST_PATH "' + this.currentFacility.waypoint[0]._id + '" TO "' + this.destination.waypoint[0]._id + '" GRAPH "pathway" RETURN vertex', batchSize: 2000 }, { headers: this.jwt }).map((res) => res.json()).subscribe((data) => {
+    let vertical = ' OPTIONS { weightAttribute: "distance"} ';
+    if (this.preferVerticalMethod === 'esc') {
+      vertical = '';
+    }
+    console.log(vertical)
+    this.http.post('http://root:@tyt06326.no-ip.org:8529/_db/capstone/_api/cursor', { query: 'FOR vertex IN ANY SHORTEST_PATH "' + this.currentFacility.waypoint[0]._id + '" TO "' + this.destination.waypoint[0]._id + '" GRAPH "pathway"' + vertical + ' RETURN vertex', batchSize: 2000 }, { headers: this.jwt }).map((res) => res.json()).subscribe((data) => {
       console.log(data);
       let pointList = [];
       this.pointList = [];
@@ -609,11 +625,31 @@ export class HomePage {
     if (i == 2) {
       this.map.removeLayer(this.layer3F);
       this.map.addLayer(this.layer2F);
-      this.map.setView([-62, 111.75], this.map.getZoom());
+      if (this.preferVerticalMethod === 'esc') {
+        this.map.setView([-62, 111.75], this.map.getZoom());
+      } else {
+        this.map.setView([-105.75, 97.375], this.map.getZoom());
+      }
+      let toast = this.toastCtrl.create({
+        message: 'Changed to 2F...',
+        duration: 2000,
+        position: 'bottom'
+      });
+      toast.present();
     } else {
       this.map.removeLayer(this.layer2F);
       this.map.addLayer(this.layer3F);
-      this.map.setView([-88.375, 113.75], this.map.getZoom());
+      if (this.preferVerticalMethod === 'esc') {
+        this.map.setView([-88.375, 113.75], this.map.getZoom());
+      } else {
+        this.map.setView([-113.75, 100], this.map.getZoom());
+      }
+      let toast = this.toastCtrl.create({
+        message: 'Changed to 3F...',
+        duration: 2000,
+        position: 'bottom'
+      });
+      toast.present();
     }
     if (this.currentPathway) {
       this.map.removeLayer(this.currentPathway);
@@ -659,6 +695,33 @@ export class HomePage {
       message: `You have arrived ${facility.name}!`,
       buttons: ['OK']
     });
+    alert.present();
+  }
+
+  showSettingMsg() {
+    let alert = this.alertCtrl.create({
+      title: 'Settings'
+    });
+    alert.addInput({
+      type: 'radio',
+      label: 'Prefer Escalator',
+      value: 'esc',
+      checked: true
+    });
+    alert.addInput({
+      type: 'radio',
+      label: 'Prefer Lift',
+      value: 'lift',
+      checked: false
+    });
+    alert.addButton('Cancel');
+    alert.addButton({
+      text: 'OK',
+      handler: data => {
+        this.preferVerticalMethod = data;
+      }
+    });
+
     alert.present();
   }
 

@@ -20,6 +20,7 @@
         var jwt = "";
         var mapMinZoom = 0;
         var mapMaxZoom = 5;
+        var floor = 2;
         var map = L.map('map', {
           maxZoom: mapMaxZoom,
           minZoom: mapMinZoom,
@@ -31,18 +32,25 @@
             map.unproject([8192, 0], mapMaxZoom));
 
         map.fitBounds(mapBounds);
-		    // L.tileLayer('../floorplan2f/{z}/{x}/{y}.jpg', {
-        //   minZoom: mapMinZoom, maxZoom: mapMaxZoom,
-        //   bounds: mapBounds,
-        //   attribution: 'Rendered with <a href="http://www.maptiler.com/">MapTiler</a>',
-        //   noWrap: true
-        // }).addTo(map);
-        L.tileLayer('{z}/{x}/{y}.png', {
+		    L.tileLayer('../floorplan2f/{z}/{x}/{y}.jpg', {
           minZoom: mapMinZoom, maxZoom: mapMaxZoom,
           bounds: mapBounds,
           attribution: 'Rendered with <a href="http://www.maptiler.com/">MapTiler</a>',
           noWrap: true
         }).addTo(map);
+        // L.tileLayer('{z}/{x}/{y}.png', {
+        //   minZoom: mapMinZoom, maxZoom: mapMaxZoom,
+        //   bounds: mapBounds,
+        //   attribution: 'Rendered with <a href="http://www.maptiler.com/">MapTiler</a>',
+        //   noWrap: true
+        // }).addTo(map);
+
+        // L.tileLayer('../3f/{z}/{x}/{y}.png', {
+        //   minZoom: mapMinZoom, maxZoom: mapMaxZoom,
+        //   bounds: mapBounds,
+        //   attribution: 'Rendered with <a href="http://www.maptiler.com/">MapTiler</a>',
+        //   noWrap: true
+        // }).addTo(map);
 
         $.post({
           url: "http://root:@localhost:8529/_open/auth",
@@ -70,8 +78,12 @@
               success: function(data) {
                 console.log(data);
                 data.result.forEach(function(waypoint) {
-                  var marker = L.marker(waypoint.coordinates).addTo(map);
-                  marker.bindPopup(waypoint._key);
+
+                  if (waypoint.coordinates[2] == floor) {
+                    var marker = L.marker(waypoint.coordinates).addTo(map);
+                    marker.bindPopup(waypoint._key);
+                  }
+
                 });
 
 
@@ -82,7 +94,7 @@
                   },
                   url: "http://root:@localhost:8529/_db/capstone/_api/cursor",
                   data: JSON.stringify({
-                    "query": 'FOR vertex IN ANY SHORTEST_PATH "waypoint/981044" TO "waypoint/980616" GRAPH "pathway" RETURN vertex',
+                    "query": 'FOR vertex IN ANY SHORTEST_PATH "waypoint/981044" TO "waypoint/1629052" GRAPH "pathway" OPTIONS { weightAttribute: "distance"} RETURN vertex',
                     batchSize: 2000
                   }),
                   success: function(data) {
@@ -121,9 +133,12 @@
                       iconSize: facility.iconSize, // size of the icon
 
                   });
-                  var marker = L.marker(facility.coordinates, { icon: icon }).addTo(map);
-                  var popup = "<table><tr><td>Name: " + facility.name + "</td></tr><tr><td>Type: " + facility.type + "</td></tr></table>"
-                  marker.bindPopup(popup);
+                  if (facility.floor == floor) {
+                    var marker = L.marker(facility.coordinates, { icon: icon }).addTo(map);
+                    var popup = "<table><tr><td>Name: " + facility.name + "</td></tr><tr><td>Type: " + facility.type + "</td></tr></table>"
+                    marker.bindPopup(popup);
+                  }
+
                 });
               },
               dataType: 'json'

@@ -15,6 +15,11 @@
   <div #upper id="upper" class="background-image">
       <div id="mapContainer" class="displayNoneClass">
         <div id="map" data-tap-disabled="true" style="height: 70vw; width: 100%"></div>
+        <ion-fab right top style="margin-top: 50vw">
+          <button ion-fab mini color="light" (click)="showSettingMsg()">
+            <ion-icon name="settings"></ion-icon>
+          </button>
+        </ion-fab>
         <ion-fab right top>
           <button ion-fab color="light" (click)="getCurrentLocation()">
             <ion-icon name="locate"></ion-icon>
